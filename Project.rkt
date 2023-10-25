@@ -29,9 +29,13 @@
         (or "+" "-" "*" "/" "%" "===" "!==" ">" "<" ">=" "<=")
     ) symbol)
 
-    ; Delimiters
+    ; Punctuation
     (equals ("=") symbol)
     (semi (";") symbol)
+    (lparen ("(") symbol)
+    (rparen (")") symbol)
+    (lbrace ("{") symbol)
+    (rbrace ("}") symbol)
     
     ; Variables/user-defined
     (quoted-string ("\"" (arbno (not #\")) "\"") string)
@@ -48,19 +52,37 @@
     ;Grammar parts
 
     ;Program root
-    (program (expression) Program_)
+    (program (statement) Program)
 
-    ;Statements
-   ; (statement
-   ;     (expression binary-logical expression)
-   ;     Binary-operator-expression)
-   ; (name (identifier) Name-expression)
+    ;Blocks
+    (block (lbrace statement rbrace) code-block)
+    (if-block (if lparen expression lparen block) if-block-braced)
+    ;(if-block (if "(" statement ")" statement) if-block-unbraced)
+    (else-block (else block) else-block-braced)
+    ;(else-block (else expression) else-block-unbraced)
+    ;(else-block (else if-block) else-if-block)
+    (conditional-statement (if-block) condition-if)
+    ;(conditional-statement (if-block else-block) condition-if-else)
+
+    ; Statements
+    (statement (expression semi) simple-statement)
     
-    ;defaults below
-    (expression (number) lit-exp)
-    (expression (identifier) var-exp)
-    (expression (primitive "(" (separated-list expression ",") ")") primapp-exp)
-    (primitive ("+") add-prim)
+    ;Expressions
+    ;(expression (identifier) name)
+    ;(expression (expression binary-operator expression)
+    ;   binary-expression)
+    ;(statement (unary-operator expression)
+    ;    Unary-operator-combination)
+
+    ;Expressions
+    (expression (number) literal)
+
+    ;Primitives
+    (primitive (number) primitive-number)
+    (primitive (boolean) primitive-boolean)
+    (primitive (quoted-string) primitive-string)
+    (primitive (null) primitive-list)
+    (primitive (binary-logical) primitive-logical)
   )
 )
 
@@ -77,6 +99,6 @@
 (define just-scan
     (sllgen:make-string-scanner lang-lexical-spec lang-grammar))
 
-(define stmt1 "const x = 1; true; // comment")
+(define stmt1 "1;")
 
-(display (just-scan stmt1))
+(display (scan&parse stmt1))
