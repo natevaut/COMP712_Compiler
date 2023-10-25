@@ -4,10 +4,19 @@
   '(
     ;(token-name (what-to-match) data-type)
     ;arbno = arbitrary number of ...
-                           
+
+    ;Lexical elements
+    ;order matters (top-down eval)
+    
     (whitespace (whitespace) skip)
     (comment ("//" (arbno (not #\newline))) skip)
-    (identifier (letter (arbno (or letter digit "_" "-"))) symbol)
+    (keyword (
+       (or "const" "function")
+      ) symbol)
+    (identifier (
+       (or letter "_" "$")
+       (arbno (or letter digit "_" "$"))
+     ) symbol)
     (punctuation ("=") string)
     (number (digit (arbno digit)) number)
   )
@@ -16,6 +25,9 @@
 
 (define lang-grammar
   '(
+    ;Grammar parts
+    
+    ;defaults below 
     (program (expression) a-program)
     (expression (number) lit-exp)
     (expression (identifier) var-exp)
@@ -40,6 +52,6 @@
 (define just-scan
     (sllgen:make-string-scanner lang-lexical-spec lang-grammar))
 
-(define stmt1 "abcd = 1 // comment")
+(define stmt1 "const x = 1 // comment")
 
 (display (just-scan stmt1))
