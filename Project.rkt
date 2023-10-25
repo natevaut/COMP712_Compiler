@@ -13,21 +13,28 @@
     (Comments ("//" (arbno (not #\newline))) skip)
 
     ;Keywords
-    (keyword (
-       (or "const" "function")
-      ) symbol)
-
-    ;Punctuation
-    (punct ((or "=" ";")) string)
+    (const ("const") symbol)
+    (function ("function") symbol)
+    (return ("return") symbol)
+    (if ("if") symbol)
+    (else ("else") symbol)
 
     ;Expressions
-    (number  ((arbno digit)) number)
+    (number ((arbno digit)) number)
     (boolean ((or "true" "false")) string)
-    (string ("\"" (arbno (not #\")) "\"") string)
     (null ("null") string)
     (binary-logical ((or "&&" "||")) symbol)
+    (unary-operator ((or "!" "-")) symbol)
+    (binary-operator (
+        (or "+" "-" "*" "/" "%" "===" "!==" ">" "<" ">=" "<=")
+    ) symbol)
+
+    ; Delimiters
+    (equals ("=") symbol)
+    (semi (";") symbol)
     
-    ; Variable
+    ; Variables/user-defined
+    (quoted-string ("\"" (arbno (not #\")) "\"") string)
     (identifier (
        (or letter "_" "$")
        (arbno (or letter digit "_" "$"))
@@ -39,22 +46,21 @@
 (define lang-grammar
   '(
     ;Grammar parts
-    (binary-operator
-      (expression binary-logical expression)
-      binary-operator-expression)
-    (name
-      (identifier)
-      name-expression)
+
+    ;Program root
+    (program (expression) Program_)
+
+    ;Statements
+   ; (statement
+   ;     (expression binary-logical expression)
+   ;     Binary-operator-expression)
+   ; (name (identifier) Name-expression)
     
-    ;defaults below 
-    (program (expression) a-program)
+    ;defaults below
     (expression (number) lit-exp)
     (expression (identifier) var-exp)
     (expression (primitive "(" (separated-list expression ",") ")") primapp-exp)
     (primitive ("+") add-prim)
-    (primitive ("-") subtract-prim)
-    (primitive ("add1") incr-prim)
-    (primitive ("sub1") decr-prim)
   )
 )
 
