@@ -7,18 +7,31 @@
 
     ;Lexical elements
     ;order matters (top-down eval)
-    
+
+    ; Ignored stuff
     (whitespace (whitespace) skip)
-    (comment ("//" (arbno (not #\newline))) skip)
+    (Comments ("//" (arbno (not #\newline))) skip)
+
+    ;Keywords
     (keyword (
        (or "const" "function")
       ) symbol)
+
+    ;Punctuation
+    (punct ((or "=" ";")) string)
+
+    ;Expressions
+    (number  ((arbno digit)) number)
+    (boolean ((or "true" "false")) string)
+    (string ("\"" (arbno (not #\")) "\"") string)
+    (null ("null") string)
+    (binary-logical ((or "&&" "||")) symbol)
+    
+    ; Variable
     (identifier (
        (or letter "_" "$")
        (arbno (or letter digit "_" "$"))
      ) symbol)
-    (punctuation ("=") string)
-    (number (digit (arbno digit)) number)
   )
 )
 
@@ -26,6 +39,12 @@
 (define lang-grammar
   '(
     ;Grammar parts
+    (binary-operator
+      (expression binary-logical expression)
+      binary-operator-expression)
+    (name
+      (identifier)
+      name-expression)
     
     ;defaults below 
     (program (expression) a-program)
@@ -52,6 +71,6 @@
 (define just-scan
     (sllgen:make-string-scanner lang-lexical-spec lang-grammar))
 
-(define stmt1 "const x = 1 // comment")
+(define stmt1 "const x = 1; true; // comment")
 
 (display (just-scan stmt1))
