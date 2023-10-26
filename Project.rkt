@@ -41,24 +41,25 @@
     ;Program root
     (program (statement) Program)
 
+    ;terminals
+    (terminal (";") terminal-semi)
+    (terminal () terminal-implied)
+
     ; Statements (a line of code)
-    (statement ("const" identifier "=" expression ";")
+    (statement ("const" identifier "=" expression terminal)
        const-declaration)
     (statement ("function" identifier "(" names ")" block)
        function-declaration)
-    (statement ("return" expression ";")
+    (statement ("return" expression terminal)
        return-statement)
     (statement (conditional-block) conditional-statement)
     (statement (block) block-statement)
-        (terminal (";") terminal-semi)
-        (terminal () terminal-implied)
     (statement (expression terminal) expression-statement)
     
     ;names
         (names-rest () no-more-identifiers)
         (names-rest ("," names) more-identifiers)
     (names (identifier names-rest) identifiers-list-plain)
-    (names-list ("(" names ")") identifiers-list)
 
     ;Blocks
     (block ("{" statement "}") code-block)
@@ -75,23 +76,22 @@
     (expression (quoted-string) string)
     (expression (null) null)
     (expression (identifier) name-expression)
-    ;TODO;(expression (expression binary-operator expression) binary-operator-combination)
-    (expression (unary-operator expression) unary-operator-combination)
+        (binary-component (binary-operator) binary-operator-component)
+        (binary-component (binary-logical) binary-logical-component)
+    (expression ("%=%" expression binary-component expression) logical-expression)
+    (expression (unary-operator expression) unary-expression)
     ;TODO logical composition
-    ;TODO;(expression (identifier names-list) function-call)
+    (expression ("%()%" identifier "(" expressions ")") function-call)
         (lambda-tail (block) lambda-tail-block)
         (lambda-tail (expression) lambda-tail-expression)
-    (expression (names-list "=>" lambda-tail) lambda-declaration)
-    ;TODO;(expression (expression "?" expression ":" expression) conditional-expression)
-    ;TODO;(expression ("(" expression ")") parenthetical-expression) ; TODO use '(' instead
+    (expression ("%=>%" "(" names ")" "=>" lambda-tail) lambda-declaration)
+    (expression ("%?:%" expression "?" expression ":" expression) conditional-expression)
+    (expression ("(" expression ")") parenthetical-expression)
 
         (expressions-tail () expressions-tail-empty)
         (expressions-tail ("," expressions) expressions-tail-many)
     (expressions () expressions-none)
     (expressions (expression expressions-tail) expressions-some)
-
-    ;expressions
-    ;TODO expressions
   )
 )
 
@@ -108,6 +108,6 @@
 (define scan
     (sllgen:make-string-scanner lang-lexical-spec lang-grammar))
 
-(define stmt1 "(id, name, thing) => { return 'block body'; };")
+(define stmt1 "return %?:% %=% a + b ? c : d;")
 
 (display (scan+parse stmt1))
