@@ -44,11 +44,27 @@
   )
 )
 
+(define value-of-st+
+  (lambda (st+)
+    (cases statements+ st+
+      [empty-statements+ () #\0]
+      [some-statements+ (sts) (value-of-sts sts)]
+    )
+  ))
+
 (define value-of-sts
   (lambda (sts)
     (cases statements sts
       [some-statements (expr _ st+)
-        (value-of-expr expr)])
+        ; Run both statements
+        ; Return the second if not null else first
+        (define expr-ran (value-of-expr expr))
+        (define sts-ran (value-of-st+ st+))
+        (if (eq? sts-ran #\0)
+            expr-ran
+            sts-ran
+        )
+      ])
     ))
 
 (define value-of-expr
