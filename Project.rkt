@@ -24,6 +24,8 @@
     
     ; Variables/user-defined
     (quoted-string ("\"" (arbno (not #\")) "\"") string)
+    (quoted-string ("\'" (arbno (not #\')) "\'") string)
+    (quoted-string ("`" (arbno (not #\`)) "`") string)
     (identifier (
        (or letter "_" "$")
        (arbno (or letter digit "_" "$"))
@@ -48,11 +50,15 @@
        return-statement)
     (statement (conditional-block) conditional-statement)
     (statement (block) block-statement)
-    (statement (expression ";") expression-statement)
+        (terminal (";") terminal-semi)
+        (terminal () terminal-implied)
+    (statement (expression terminal) expression-statement)
     
     ;names
-    (names (identifier) one-name)
-    ;TODO many names
+        (names-rest () no-more-identifiers)
+        (names-rest ("," names) more-identifiers)
+    (names (identifier names-rest) identifiers-list-plain)
+    (names-list ("(" names ")") identifiers-list)
 
     ;Blocks
     (block ("{" statement "}") code-block)
@@ -69,16 +75,20 @@
     (expression (quoted-string) string)
     (expression (null) null)
     (expression (identifier) name-expression)
-    ;TODO bin operator combin
-    (expression (unary-operator expression)
-       unary-operator-combination)
+    ;TODO;(expression (expression binary-operator expression) binary-operator-combination)
+    (expression (unary-operator expression) unary-operator-combination)
     ;TODO logical composition
-    ;TODO function application
-    ;TODO lambda expression
-    ;TODO lambda expression-2
-    ;TODO conditional expression ?:
-    (expression ("(" expression ")")
-       parenthetical-expression)
+    ;TODO;(expression (identifier names-list) function-call)
+        (lambda-tail (block) lambda-tail-block)
+        (lambda-tail (expression) lambda-tail-expression)
+    (expression (names-list "=>" lambda-tail) lambda-declaration)
+    ;TODO;(expression (expression "?" expression ":" expression) conditional-expression)
+    ;TODO;(expression ("(" expression ")") parenthetical-expression) ; TODO use '(' instead
+
+        (expressions-tail () expressions-tail-empty)
+        (expressions-tail ("," expressions) expressions-tail-many)
+    (expressions () expressions-none)
+    (expressions (expression expressions-tail) expressions-some)
 
     ;expressions
     ;TODO expressions
@@ -92,12 +102,12 @@
 (define show-lang-datatypes
     (lambda () (sllgen:list-define-datatypes lang-lexical-spec lang-grammar)))
   
-(define scan&parse
+(define scan+parse
     (sllgen:make-string-parser lang-lexical-spec lang-grammar))
 
-(define just-scan
+(define scan
     (sllgen:make-string-scanner lang-lexical-spec lang-grammar))
 
-(define stmt1 "-1;")
+(define stmt1 "(id, name, thing) => { return 'block body'; };")
 
-(display (scan&parse stmt1))
+(display (scan+parse stmt1))
