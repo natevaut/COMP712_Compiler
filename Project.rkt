@@ -46,11 +46,11 @@
     (terminal () terminal-implied)
 
     ; Statements (a line of code)
-    (statement ("const" identifier "=" expression terminal)
+    (statement ("const" identifier "=" expression-component terminal)
        const-declaration)
     (statement ("function" identifier "(" names ")" block)
        function-declaration)
-    (statement ("return" expression terminal)
+    (statement ("return" expression-component terminal)
        return-statement)
     (statement (conditional-block) conditional-statement)
     (statement (block) block-statement)
@@ -76,22 +76,25 @@
     (expression (quoted-string) string)
     (expression (null) null)
     (expression (identifier) name-expression)
+    (expression ("(" expressions ")") parenthetical-expressions)
+    (expression (unary-operator expression) unary-expression)
+    
         (binary-component (binary-operator) binary-operator-component)
         (binary-component (binary-logical) binary-logical-component)
-    (expression ("%=%" expression binary-component expression) logical-expression)
-    (expression (unary-operator expression) unary-expression)
-    ;TODO logical composition
-    (expression ("%()%" identifier "(" expressions ")") function-call)
+    (tail (binary-component expression) logical-expression-tail)
         (lambda-tail (block) lambda-tail-block)
         (lambda-tail (expression) lambda-tail-expression)
-    (expression ("%=>%" "(" names ")" "=>" lambda-tail) lambda-declaration)
-    (expression ("%?:%" expression "?" expression ":" expression) conditional-expression)
-    (expression ("(" expression ")") parenthetical-expression)
+    (tail ( "=>" lambda-tail) lambda-declaration-tail)
+    (tail ("?" expression ":" expression) conditional-expression-tail)
 
-        (expressions-tail () expressions-tail-empty)
-        (expressions-tail ("," expressions) expressions-tail-many)
+    (expression-component (expression expression-post) expression-item)
+    (expression-post () expression-post-empty)
+    (expression-post (tail expression-post) expression-post-rest)
+
+        (expressions-rest () expressions-tail-empty)
+        (expressions-rest ("," expressions) expressions-tail-many)
     (expressions () expressions-none)
-    (expressions (expression expressions-tail) expressions-some)
+    (expressions (expression expressions-rest) expressions-some)
   )
 )
 
@@ -108,6 +111,6 @@
 (define scan
     (sllgen:make-string-scanner lang-lexical-spec lang-grammar))
 
-(define stmt1 "return %?:% %=% a + b ? c : d;")
+(define stmt1 "function abs(x) {return x >= 0 ? x : -x;}")
 
 (display (scan+parse stmt1))
