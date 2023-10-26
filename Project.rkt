@@ -115,3 +115,5 @@
 (define scan
     (sllgen:make-string-scanner lang-lexical-spec lang-grammar))
 
+(provide scan)
+(provide scan+parse)
