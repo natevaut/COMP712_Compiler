@@ -39,7 +39,7 @@
     ;Grammar parts
 
     ;Program root
-    (program (statement) Program)
+    (program (statements) Program)
 
     ;terminals
     (terminal (";") terminal-semi)
@@ -54,7 +54,11 @@
        return-statement)
     (statement (conditional-block) conditional-statement)
     (statement (block) block-statement)
-    (statement (expression terminal) expression-statement)
+    (statement (expression-component terminal) expression-statement)
+
+    (statements (statement statements-rest) statements-lines)
+    (statements-rest () statements-rest-empty)
+    (statements-rest (statement statements-rest) statements-rest-some)
     
     ;names
         (names-rest () no-more-identifiers)
@@ -111,6 +115,3 @@
 (define scan
     (sllgen:make-string-scanner lang-lexical-spec lang-grammar))
 
-(define stmt1 "function abs(x) {return x >= 0 ? x : -x;}")
-
-(display (scan+parse stmt1))
