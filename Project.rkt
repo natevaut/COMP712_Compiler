@@ -14,6 +14,7 @@
 
     ;Expressions
     (number ((arbno digit)) number)
+    (number ((arbno digit) "." (arbno digit)) number)
     (boolean ((or "true" "false")) string)
     (null ("null") string)
     (binary-logical ((or "&&" "||")) symbol)
