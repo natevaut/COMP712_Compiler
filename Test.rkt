@@ -3,7 +3,7 @@
 
 (display (scan+parse #<<ENDOFTEXT
 
-const size = 5+4; size;
+square(4+2);
 
 ENDOFTEXT
 ))

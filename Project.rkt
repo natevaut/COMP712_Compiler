@@ -46,15 +46,15 @@
     (terminal () terminal-implied)
 
     ; Statements (a line of code)
-    (statement ("const" identifier "=" expression-component terminal)
+    (statement ("const" identifier "=" expression terminal)
        const-declaration)
     (statement ("function" identifier "(" names ")" block)
        function-declaration)
-    (statement ("return" expression-component terminal)
+    (statement ("return" expression terminal)
        return-statement)
     (statement (conditional-block) conditional-statement)
     (statement (block) block-statement)
-    (statement (expression-component terminal) expression-statement)
+    (statement (expression terminal) expression-statement)
 
     (statements (statement statements-rest) statements-lines)
     (statements-rest () statements-rest-empty)
@@ -67,7 +67,7 @@
 
     ;Blocks
     (block ("{" statement "}") code-block)
-     (if-header ("if" "(" expression "(") if-block-header)
+     (if-header ("if" "(" expression ")") if-block-header)
      (if-block (if-header block) if-block-braced)
      (else-block ("else" block) else-block-braced)
      (else-block () else-block-empty)
@@ -75,23 +75,23 @@
      (conditional-block (if-block else-block) if-else-block)
     
     ;Atomic expressions
-    (expression (number) number)
-    (expression (boolean) boolean)
-    (expression (quoted-string) string)
-    (expression (null) null)
-    (expression (identifier) name-expression)
-    (expression ("(" expressions ")") parenthetical-expressions)
-    (expression (unary-operator expression) unary-expression)
+    (atomic (number) number)
+    (atomic (boolean) boolean)
+    (atomic (quoted-string) string)
+    (atomic (null) null)
+    (atomic (identifier) name-expression)
+    (atomic ("(" expressions ")") parenthetical-expressions)
+    (atomic (unary-operator atomic) unary-expression)
     
         (binary-component (binary-operator) binary-operator-component)
         (binary-component (binary-logical) binary-logical-component)
-    (tail (binary-component expression) logical-expression-tail)
+    (tail (binary-component atomic) logical-expression-tail)
         (lambda-tail (block) lambda-tail-block)
-        (lambda-tail (expression) lambda-tail-expression)
+        (lambda-tail (atomic) lambda-tail-expression)
     (tail ( "=>" lambda-tail) lambda-declaration-tail)
-    (tail ("?" expression ":" expression) conditional-expression-tail)
+    (tail ("?" atomic ":" atomic) conditional-expression-tail)
 
-    (expression-component (expression expression-post) expression-item)
+    (expression (atomic expression-post) expression-item)
     (expression-post () expression-post-empty)
     (expression-post (tail expression-post) expression-post-rest)
 
