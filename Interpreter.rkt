@@ -13,16 +13,17 @@
 
 (define basic-grmr '(
     (program (expression) a-program)
-    (expression (term expression+) an-expr)
-    (expression+ ("+" term expression+) an-add-expr)
-    (expression+ ("-" term expression+) a-sub-expr)
-    (expression+ () null-expr)
-    (term (factor term+) a-factor)
-    (term+ ("*" factor term+) a-mult-term)
-    (term+ ("/" factor term+) a-div-term)
-    (term+ () null-term)
-    (factor (number) a-number)
-    (factor ("(" expression ")") a-group)
+    (expression (math-expression) a-math-expr)
+    (math-expression (math-term math-expression+) an-expr)
+    (math-expression+ ("+" math-term math-expression+) an-add-expr)
+    (math-expression+ ("-" math-term math-expression+) a-sub-expr)
+    (math-expression+ () null-expr)
+    (math-term (math-factor math-term+) a-factor)
+    (math-term+ ("*" math-factor math-term+) a-mult-term)
+    (math-term+ ("/" math-factor math-term+) a-div-term)
+    (math-term+ () null-term)
+    (math-factor (number) a-number)
+    (math-factor ("(" expression ")") a-group)
 ))
 
 (sllgen:make-define-datatypes basic-lex basic-grmr)
@@ -38,39 +39,43 @@
     )
   )
 )
-
 (define value-of-expr
   (lambda (exp)
     (cases expression exp
-      [an-expr (x y) (value-of-expr2 x y)])))
+      [a-math-expr (expr) (value-of-math-expr expr)])))
 
-(define value-of-expr2
+(define value-of-math-expr
+  (lambda (exp)
+    (cases math-expression exp
+      [an-expr (x y) (value-of-math-expr2 x y)])))
+
+(define value-of-math-expr2
   (lambda (first-term math-op)
-    (cases expression+ math-op
-      [an-add-expr (t e+) (+ (value-of-term first-term)
-                             (value-of-expr2 t e+))]
-      [a-sub-expr (t e+) (- (value-of-term first-term)
-                            (value-of-term t))] ; Fix subtraction here
-      [null-expr () (value-of-term first-term)])))
+    (cases math-expression+ math-op
+      [an-add-expr (t e+) (+ (value-of-math-term first-term)
+                             (value-of-math-expr2 t e+))]
+      [a-sub-expr (t e+) (- (value-of-math-term first-term)
+                            (value-of-math-term t))] ; Fix subtraction here
+      [null-expr () (value-of-math-term first-term)])))
 
 
-(define value-of-term
+(define value-of-math-term
   (lambda (tm)
-    (cases term tm
-      [a-factor (f t+) (value-of-term2 f t+)])))
+    (cases math-term tm
+      [a-factor (f t+) (value-of-math-term2 f t+)])))
 
-(define value-of-term2
+(define value-of-math-term2
   (lambda (fac t+)
-    (cases term+ t+
-      [a-mult-term (f t+) (* (value-of-term2 f t+)
-                             (value-of-factor fac))]
-      [a-div-term (f t+) (/ (value-of-factor fac)
-                            (value-of-term2 f t+))]
-      [null-term () (value-of-factor fac)])))
+    (cases math-term+ t+
+      [a-mult-term (f t+) (* (value-of-math-term2 f t+)
+                             (value-of-math-factor fac))]
+      [a-div-term (f t+) (/ (value-of-math-factor fac)
+                            (value-of-math-term2 f t+))]
+      [null-term () (value-of-math-factor fac)])))
 
-(define value-of-factor
+(define value-of-math-factor
   (lambda (f)
-    (cases factor f
+    (cases math-factor f
       (a-number (x) x)
       (a-group (exp) (value-of-expr exp)))))
 
