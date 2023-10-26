@@ -9,11 +9,15 @@
     (whitespace (whitespace) skip)
     (comment ("//" (arbno (not #\newline))) skip)
     (number ((arbno digit)) number)
+    (terminal (";") symbol)
 ))
 
 (define basic-grmr '(
-    (program (expression) a-program)
+    (program (statements) a-program)
     (expression (math-expression) a-math-expr)
+    (statements (expression terminal statements+) some-statements)
+    (statements+ () empty-statements+)
+    (statements+ (statements) some-statements+)
     (math-expression (math-term math-expression+) an-expr)
     (math-expression+ ("+" math-term math-expression+) an-add-expr)
     (math-expression+ ("-" math-term math-expression+) a-sub-expr)
@@ -35,10 +39,18 @@
 (define value-of-program
   (lambda (pgm)
     (cases program pgm
-      [a-program (expr) (value-of-expr expr) ]
+      [a-program (sts) (value-of-sts sts) ]
     )
   )
 )
+
+(define value-of-sts
+  (lambda (sts)
+    (cases statements sts
+      [some-statements (expr _ st+)
+        (value-of-expr expr)])
+    ))
+
 (define value-of-expr
   (lambda (exp)
     (cases expression exp
