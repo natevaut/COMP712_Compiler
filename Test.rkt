@@ -1,5 +1,5 @@
 #lang eopl
-(require "./Project.rkt")
+(require "./Parser.rkt")
 
 (display (scan+parse #<<ENDOFTEXT
 
