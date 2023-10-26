@@ -67,7 +67,7 @@
     (names (identifier names-rest) identifiers-list-plain)
 
     ;Blocks
-    (block ("{" statement "}") code-block)
+    (block ("{" statements "}") code-block)
      (if-header ("if" "(" expression ")") if-block-header)
      (if-block (if-header block) if-block-braced)
      (else-block ("else" block) else-block-braced)

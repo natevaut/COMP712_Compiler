@@ -3,7 +3,7 @@
 
 (display (scan+parse #<<ENDOFTEXT
 
-square(4+2);
+sqyare(3) + square (4)
 
 ENDOFTEXT
 ))
