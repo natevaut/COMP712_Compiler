@@ -66,9 +66,7 @@
     (statements-rest (statement statements-rest) statements-rest-some)
     
     ;names
-        (names-rest () no-more-identifiers)
-        (names-rest ("," names) more-identifiers)
-    (names (identifier names-rest) identifiers-list-plain)
+    (names ((separated-list identifier ",")) identifiers-list)
 
     ;Blocks
     (block ("{" statements "}") code-block)
@@ -101,10 +99,7 @@
     (expression-post () expression-post-empty)
     (expression-post (tail ) expression-post-rest)
 
-        (expressions-rest () expressions-tail-empty)
-        (expressions-rest ("," expressions) expressions-tail-many)
-    (expressions () expressions-none)
-    (expressions (expression expressions-rest) expressions-some)
+    (expressions ((separated-list expression ",")) expressions-list)
   )
 )
 
