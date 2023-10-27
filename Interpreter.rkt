@@ -22,6 +22,10 @@
                       val
                       (lookup-env old-env search-sym)))))
 
+(define (set-lvalue env id val)
+  (extended-env id val global-env)
+  'undefined
+)
 (define (set-value env id val)
   (set! global-env (extended-env id val global-env))
   'undefined
@@ -54,7 +58,7 @@
     (program (statements) a-program)
     (block ("{" (separated-list statements "") "}") braced-block)
     (block (expression terminal) unbraced-block)
-    (func-statements (statements) func-sts)
+    (func-statements ((separated-list statements "")) func-sts)
     (func-statements ("return" expression terminal func-statements) func-return)
     (statements (statement statements+) some-statements)
     (statement (expression terminal) expr-statement)
@@ -87,9 +91,11 @@
     (math-term+ ("*" atomic math-term+) a-mult-term)
     (math-term+ ("/" atomic math-term+) a-div-term)
     (math-term+ () null-term)
+    (identifier-post () just-identifier)
+    (identifier-post ("(" (separated-list expression ",") ")") func-call)
+    (atomic (identifier identifier-post) an-identifier)
     (atomic (number) a-number)
     (atomic (quoted-string) a-string)
-    (atomic (identifier) an-identifier)
     (atomic ("true") true)
     (atomic ("false") false)
     (atomic ("null") null)
@@ -129,7 +135,13 @@
 )
 
 (define value-of-func-sts
-  (lambda (sts env)
+  (lambda (sts params+args env)
+    ; list of (param . val)
+    (define param-arg-list (apply map list params+args))
+    (define (apply-arg-val pair)
+      (set-value env (car pair) (cadr pair))
+    )
+    (map apply-arg-val param-arg-list)
     (cases func-statements sts
       [func-sts (sts) (value-of-sts sts env)]
       [func-return (expr _ _rest) (value-of-expr expr env)] ; ignore _rest
@@ -173,7 +185,8 @@
         )
       ]
       [a-const-decl (id decl-expr _) (set-value env id (value-of-expr decl-expr env))]
-      [function-decl (id params func-sts) (set-value env id (lambda params (value-of-func-sts func-sts env)))]
+      [function-decl (id params func-sts) (set-value env id
+                       (lambda args (value-of-func-sts func-sts (cons params args) env)))]
     )
   )
 )
@@ -282,13 +295,24 @@
   )
 )
 
+(define value-of-identifier
+  (lambda (id post env)
+    (define val (get-value env id))
+    (define (value-of-expr-w/-env expr) (value-of-expr expr env))
+    (cases identifier-post post
+      [just-identifier () val]
+      [func-call (params) (val (map value-of-expr-w/-env params))]
+    )
+  )
+)
+
 (define value-of-atomic
   (lambda (f env)
     (define (value-of-expr-w/-env expr) (value-of-expr expr env))
     (cases atomic f
       [a-number (x) x]
       [a-string (str) str]
-      [an-identifier (id) (get-value env id)]
+      [an-identifier (id post) (value-of-identifier id post env)]
       [a-group (exprs) (car (reverse (map value-of-expr-w/-env exprs)))]
       [unary-minus (n) (- (value-of-atomic n env))]
       [unary-not (n) (not (value-of-atomic n env))]
