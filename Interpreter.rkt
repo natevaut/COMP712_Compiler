@@ -17,6 +17,10 @@
     (quoted-string ("\"" (arbno (not #\")) "\"") string)
     (quoted-string ("\'" (arbno (not #\')) "\'") string)
     (quoted-string ("`" (arbno (not #\`)) "`") string)
+    (identifier (
+       (or letter "_" "$")
+       (arbno (or letter digit "_" "$"))
+     ) symbol)
 ))
 
 (define basic-grmr '(
@@ -25,6 +29,7 @@
     (statements ("if" "(" expression ")" "{" statements "}" else-content) if-block)
     (else-content ("else" "{" statements "}") else-block)
     (else-content () else-block-empty)
+    (statements ("const" identifier "=" expression terminal) a-const-decl)
     (statements+ () empty-statements+)
     (statements+ (statements) some-statements+)
     (expression (bin-operation) a-bin-op-expr)
@@ -104,6 +109,7 @@
           (value-of-else-content else-block-content)
         )
       ]
+      [a-const-decl (id st _) (set! id st)]
     )
   )
 )
