@@ -31,8 +31,11 @@
     (bin-operation+ ("<=" math-expression bin-operation+) a-lte-op)
     (bin-operation+ (">" math-expression bin-operation+) a-gt-op)
     (bin-operation+ (">=" math-expression bin-operation+) a-gte-op)
+    (bin-operation+ ("&&" math-expression bin-operation+) an-and-op)
+    (bin-operation+ ("||" math-expression bin-operation+) an-or-op)
     (bin-operation+ () null-math-op)
     (math-expression (math-term math-expression+) an-expr)
+    (math-expression+ ("%"  math-term math-expression+) a-mod-expr)
     (math-expression+ ("+" math-term math-expression+) an-add-expr)
     (math-expression+ ("-" math-term math-expression+) a-sub-expr)
     (math-expression+ () null-expr)
@@ -123,6 +126,12 @@
       [a-gte-op (expr op+)
         (>= (value-of-math-expr first-expr) (value-of-bin-op2 expr op+))
       ]
+      [an-and-op (expr op+)
+        (and (value-of-math-expr first-expr) (value-of-bin-op2 expr op+))
+      ]
+      [an-or-op (expr op+)
+        (or (value-of-math-expr first-expr) (value-of-bin-op2 expr op+))
+      ]
       [null-math-op () (value-of-math-expr first-expr)]
     )
   )
@@ -143,6 +152,8 @@
                              (value-of-math-expr2 t e+))]
       [a-sub-expr (t e+) (- (value-of-math-term first-term)
                             (value-of-math-expr2 t e+))]
+      [a-mod-expr (t e+) (modulo (value-of-math-term first-term)
+                                 (value-of-math-expr2 t e+))]
       [null-expr () (value-of-math-term first-term)]
     )
   )
