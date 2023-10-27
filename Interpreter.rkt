@@ -64,7 +64,7 @@
     (atomic ("undefined") undefined)
     (atomic ("-" atomic) unary-minus)
     (atomic ("!" atomic) unary-not)
-    (atomic ("(" expression ")") a-group)
+    (atomic ("(" (separated-list expression ",") ")") a-group)
 ))
 
 (sllgen:make-define-datatypes basic-lex basic-grmr)
@@ -249,7 +249,7 @@
       [a-number (x) x]
       [a-string (str) str]
       [an-identifier (id) (get-value id)]
-      [a-group (exp) (value-of-expr exp)]
+      [a-group (exprs) (car (reverse (map value-of-expr exprs)))]
       [unary-minus (n) (- (value-of-atomic n))]
       [unary-not (n) (not (value-of-atomic n))]
       [true () #t]
