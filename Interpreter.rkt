@@ -25,11 +25,12 @@
 
 (define basic-grmr '(
     (program (statements) a-program)
-    (statements (expression terminal statements+) some-statements)
-    (statements ("if" "(" expression ")" "{" statements "}" else-content) if-block)
+    (statements (statement statements+) some-statements)
+    (statement (expression terminal) expr-statement)
+    (statement ("if" "(" expression ")" "{" statements "}" else-content) if-block)
     (else-content ("else" "{" statements "}") else-block)
     (else-content () else-block-empty)
-    (statements ("const" identifier "=" expression terminal) a-const-decl)
+    (statement ("const" identifier "=" expression terminal) a-const-decl)
     (statements+ () empty-statements+)
     (statements+ (statements) some-statements+)
     (expression (bin-operation) a-bin-op-expr)
@@ -85,16 +86,24 @@
 (define value-of-sts
   (lambda (sts)
     (cases statements sts
-      [some-statements (expr _ st+)
+      [some-statements (st st+)
         ; Run both statements
         ; Return the second if not empty else first
-        (define expr-ran (value-of-expr expr))
+        (define st-ran (value-of-st st))
         (define sts-ran (value-of-st+ st+))
         (if (eq? sts-ran 'empty)
-            expr-ran
+            st-ran
             sts-ran
         )
       ]
+    )
+  )
+)
+
+(define value-of-st
+  (lambda (st)
+    (cases statement st
+      [expr-statement (expr _) (value-of-expr expr)]
       [if-block (test if-sts else-block-content)
         ; To parse the else block
         (define value-of-else-content (lambda (content)
@@ -109,7 +118,7 @@
           (value-of-else-content else-block-content)
         )
       ]
-      [a-const-decl (id st _) (set! id st)]
+      [a-const-decl (id decl-st _) (set! id decl-st)]
     )
   )
 )
