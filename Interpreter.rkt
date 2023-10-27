@@ -8,6 +8,7 @@
 (define basic-lex '(
     (whitespace (whitespace) skip)
     (comment ("//" (arbno (not #\newline))) skip)
+    
     (number ((arbno digit)) number)
     (number ((arbno digit) "." digit (arbno digit)) number)
     (boolean ((or "true" "false")) symbol)
@@ -20,9 +21,17 @@
     (statements (expression terminal statements+) some-statements)
     (statements+ () empty-statements+)
     (statements+ (statements) some-statements+)
-    (expression (math-expression) a-math-expr)
+    (expression (bin-operation) a-bin-op-expr)
     (expression (boolean) a-boolean)
     (expression (null) null)
+    (bin-operation (math-expression bin-operation+) a-bin-op)
+    (bin-operation+ ("===" math-expression bin-operation+) an-equality-op)
+    (bin-operation+ ("!==" math-expression bin-operation+) an-inequality-op)
+    (bin-operation+ ("<" math-expression bin-operation+) a-lt-op)
+    (bin-operation+ ("<=" math-expression bin-operation+) a-lte-op)
+    (bin-operation+ (">" math-expression bin-operation+) a-gt-op)
+    (bin-operation+ (">=" math-expression bin-operation+) a-gte-op)
+    (bin-operation+ () null-math-op)
     (math-expression (math-term math-expression+) an-expr)
     (math-expression+ ("+" math-term math-expression+) an-add-expr)
     (math-expression+ ("-" math-term math-expression+) a-sub-expr)
@@ -78,9 +87,43 @@
 (define value-of-expr
   (lambda (exp)
     (cases expression exp
-      [a-math-expr (expr) (value-of-math-expr expr)]
+      [a-bin-op-expr (op) (value-of-bin-op op)]
       [a-boolean (bool) bool]
       [null (null) #\0]
+    )
+  )
+)
+
+(define value-of-bin-op
+  (lambda (op)
+    (cases bin-operation op
+      [a-bin-op (expr op+) (value-of-bin-op2 expr op+)]
+    )
+  )
+)
+
+(define value-of-bin-op2
+  (lambda (first-expr rest-op+)
+    (cases bin-operation+ rest-op+
+      [an-equality-op (expr op+)
+        (eq? (value-of-math-expr first-expr) (value-of-bin-op2 expr op+))
+      ]
+      [an-inequality-op (expr op+)
+        (not (eq? (value-of-math-expr first-expr) (value-of-bin-op2 expr op+)))
+      ]
+      [a-lt-op (expr op+)
+        (< (value-of-math-expr first-expr) (value-of-bin-op2 expr op+))
+      ]
+      [a-lte-op (expr op+)
+        (<= (value-of-math-expr first-expr) (value-of-bin-op2 expr op+))
+      ]
+      [a-gt-op (expr op+)
+        (> (value-of-math-expr first-expr) (value-of-bin-op2 expr op+))
+      ]
+      [a-gte-op (expr op+)
+        (>= (value-of-math-expr first-expr) (value-of-bin-op2 expr op+))
+      ]
+      [null-math-op () (value-of-math-expr first-expr)]
     )
   )
 )
@@ -88,17 +131,18 @@
 (define value-of-math-expr
   (lambda (exp)
     (cases math-expression exp
-      [an-expr (x y) (value-of-math-expr2 x y)]
+      [an-expr (t e+) (value-of-math-expr2 t e+)]
     )
-  ))
+  )
+)
 
 (define value-of-math-expr2
-  (lambda (first-term math-op)
-    (cases math-expression+ math-op
+  (lambda (first-term expr+)
+    (cases math-expression+ expr+
       [an-add-expr (t e+) (+ (value-of-math-term first-term)
                              (value-of-math-expr2 t e+))]
       [a-sub-expr (t e+) (- (value-of-math-term first-term)
-                            (value-of-math-term2 t e+))]
+                            (value-of-math-expr2 t e+))]
       [null-expr () (value-of-math-term first-term)]
     )
   )
