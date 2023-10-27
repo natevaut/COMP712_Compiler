@@ -31,10 +31,6 @@
     (statement ("const" identifier "=" expression terminal) a-const-decl)
     (statements+ () empty-statements+)
     (statements+ (statements) some-statements+)
-    (expression ("true") boolean-true)
-    (expression ("false") boolean-false)
-    (expression ("null") null)
-    (expression ("undefined") undefined)
     (expression (quoted-string) a-string)
     (expression (identifier) an-identifier)
     (expression (bin-operation) a-bin-op-expr)
@@ -53,14 +49,18 @@
     (math-expression+ ("+" math-term math-expression+) an-add-expr)
     (math-expression+ ("-" math-term math-expression+) a-sub-expr)
     (math-expression+ () null-expr)
-    (math-term (math-factor math-term+) a-factor)
-    (math-term+ ("*" math-factor math-term+) a-mult-term)
-    (math-term+ ("/" math-factor math-term+) a-div-term)
+    (math-term (atomic math-term+) a-factor)
+    (math-term+ ("*" atomic math-term+) a-mult-term)
+    (math-term+ ("/" atomic math-term+) a-div-term)
     (math-term+ () null-term)
-    (math-factor (number) a-number)
-    (math-factor ("-" math-factor) unary-minus)
-    (math-factor ("!" math-factor) unary-not)
-    (math-factor ("(" expression ")") a-group)
+    (atomic (number) a-number)
+    (atomic ("true") true)
+    (atomic ("false") false)
+    (atomic ("null") null)
+    (atomic ("undefined") undefined)
+    (atomic ("-" atomic) unary-minus)
+    (atomic ("!" atomic) unary-not)
+    (atomic ("(" expression ")") a-group)
 ))
 
 (sllgen:make-define-datatypes basic-lex basic-grmr)
@@ -129,11 +129,6 @@
 (define value-of-expr
   (lambda (exp)
     (cases expression exp
-      [boolean-true () #t]
-      [boolean-false () #f]
-      [undefined () 'undefined]
-      [null () 'null]
-      ;[number (num) num]
       [a-string (str) str]
       [an-identifier (id) (get-value id)]
       [a-bin-op-expr (op) (value-of-bin-op op)]
@@ -171,10 +166,14 @@
         (>= (value-of-math-expr first-expr) (value-of-bin-op2 expr op+))
       ]
       [an-and-op (expr op+)
-        (and (value-of-math-expr first-expr) (value-of-bin-op2 expr op+))
+        (define first (value-of-math-expr first-expr))
+        (define rest (value-of-bin-op2 expr op+))
+        (if (and (truthy first) (truthy rest)) rest #f)
       ]
       [an-or-op (expr op+)
-        (or (value-of-math-expr first-expr) (value-of-bin-op2 expr op+))
+        (define first (value-of-math-expr first-expr))
+        (define rest (value-of-bin-op2 expr op+))
+        (if (truthy first) first rest)
       ]
       [null-math-op () (value-of-math-expr first-expr)]
     )
@@ -216,21 +215,25 @@
   (lambda (fac t+)
     (cases math-term+ t+
       [a-mult-term (f t+) (* (value-of-math-term2 f t+)
-                             (value-of-math-factor fac))]
-      [a-div-term (f t+) (/ (value-of-math-factor fac)
+                             (value-of-atomic fac))]
+      [a-div-term (f t+) (/ (value-of-atomic fac)
                             (value-of-math-term2 f t+))]
-      [null-term () (value-of-math-factor fac)]
+      [null-term () (value-of-atomic fac)]
     )
   )
 )
 
-(define value-of-math-factor
+(define value-of-atomic
   (lambda (f)
-    (cases math-factor f
+    (cases atomic f
       [a-number (x) x]
       [a-group (exp) (value-of-expr exp)]
-      [unary-minus (n) (- (value-of-math-factor n))]
-      [unary-not (n) (not (value-of-math-factor n))]
+      [unary-minus (n) (- (value-of-atomic n))]
+      [unary-not (n) (not (value-of-atomic n))]
+      [true () #t]
+      [false () #f]
+      [undefined () 'undefined]
+      [null () 'null]
     )
   )
 )
