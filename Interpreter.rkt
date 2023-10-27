@@ -16,7 +16,7 @@
 (define (lookup-env env search-sym)
   (cases environment env
     (empty-env ()
-               (eopl:error 'lookup-env "~s lookup failed: empty env" search-sym))
+               (eopl:error 'lookup-env "~s lookup failed: empty env or undeclared variable" search-sym))
     (extended-env (sym val old-env)
                   (if (eqv? sym search-sym)
                       val
@@ -54,13 +54,15 @@
     (program (statements) a-program)
     (block ("{" (separated-list statements "") "}") braced-block)
     (block (expression terminal) unbraced-block)
+    (func-statements (statements) func-sts)
+    (func-statements ("return" expression terminal func-statements) func-return)
     (statements (statement statements+) some-statements)
     (statement (expression terminal) expr-statement)
     (statement ("if" "(" expression ")" block else-content) if-block)
     (else-content ("else" block) else-block)
     (else-content () else-block-empty)
     (statement ("const" identifier "=" expression terminal) a-const-decl)
-    (statement ("function" identifier "(" (separated-list identifier ",") ")" block) function-decl)
+    (statement ("function" identifier "(" (separated-list identifier ",") ")" "{" func-statements "}") function-decl)
     (statements+ () empty-statements+)
     (statements+ (statements) some-statements+)
     (expression (bin-operation expression+) a-bin-op-expr)
@@ -126,6 +128,15 @@
   )
 )
 
+(define value-of-func-sts
+  (lambda (sts env)
+    (cases func-statements sts
+      [func-sts (sts) (value-of-sts sts env)]
+      [func-return (expr _ _rest) (value-of-expr expr env)] ; ignore _rest
+    )
+  )
+)
+
 (define value-of-sts
   (lambda (sts env)
     (cases statements sts
@@ -162,7 +173,7 @@
         )
       ]
       [a-const-decl (id decl-expr _) (set-value env id (value-of-expr decl-expr env))]
-      [function-decl (id params sts) (set-value env id (lambda params (value-of-sts sts env)))]
+      [function-decl (id params func-sts) (set-value env id (lambda params (value-of-func-sts func-sts env)))]
     )
   )
 )
