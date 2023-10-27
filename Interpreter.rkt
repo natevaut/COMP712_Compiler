@@ -9,15 +9,16 @@
     (whitespace (whitespace) skip)
     (comment ("//" (arbno (not #\newline))) skip)
     (number ((arbno digit)) number)
+    (boolean ((or "true" "false")) symbol)
     (terminal (";") symbol)
 ))
 
 (define basic-grmr '(
     (program (statements) a-program)
-    (expression (math-expression) a-math-expr)
     (statements (expression terminal statements+) some-statements)
     (statements+ () empty-statements+)
     (statements+ (statements) some-statements+)
+    (expression (math-expression) a-math-expr)
     (math-expression (math-term math-expression+) an-expr)
     (math-expression+ ("+" math-term math-expression+) an-add-expr)
     (math-expression+ ("-" math-term math-expression+) a-sub-expr)
@@ -50,7 +51,8 @@
       [empty-statements+ () #\0]
       [some-statements+ (sts) (value-of-sts sts)]
     )
-  ))
+  )
+)
 
 (define value-of-sts
   (lambda (sts)
@@ -64,18 +66,25 @@
             expr-ran
             sts-ran
         )
-      ])
-    ))
+      ]
+    )
+  )
+)
 
 (define value-of-expr
   (lambda (exp)
     (cases expression exp
-      [a-math-expr (expr) (value-of-math-expr expr)])))
+      [a-math-expr (expr) (value-of-math-expr expr)]
+    )
+  )
+)
 
 (define value-of-math-expr
   (lambda (exp)
     (cases math-expression exp
-      [an-expr (x y) (value-of-math-expr2 x y)])))
+      [an-expr (x y) (value-of-math-expr2 x y)]
+    )
+  ))
 
 (define value-of-math-expr2
   (lambda (first-term math-op)
@@ -83,14 +92,20 @@
       [an-add-expr (t e+) (+ (value-of-math-term first-term)
                              (value-of-math-expr2 t e+))]
       [a-sub-expr (t e+) (- (value-of-math-term first-term)
-                            (value-of-math-term t))] ; Fix subtraction here
-      [null-expr () (value-of-math-term first-term)])))
+                            (value-of-math-term2 t e+))]
+      [null-expr () (value-of-math-term first-term)]
+    )
+  )
+)
 
 
 (define value-of-math-term
   (lambda (tm)
     (cases math-term tm
-      [a-factor (f t+) (value-of-math-term2 f t+)])))
+      [a-factor (f t+) (value-of-math-term2 f t+)]
+    )
+  )
+)
 
 (define value-of-math-term2
   (lambda (fac t+)
@@ -99,15 +114,22 @@
                              (value-of-math-factor fac))]
       [a-div-term (f t+) (/ (value-of-math-factor fac)
                             (value-of-math-term2 f t+))]
-      [null-term () (value-of-math-factor fac)])))
+      [null-term () (value-of-math-factor fac)]
+    )
+  )
+)
 
 (define value-of-math-factor
   (lambda (f)
     (cases math-factor f
-      (a-number (x) x)
-      (a-group (exp) (value-of-expr exp)))))
+      [a-number (x) x]
+      [a-group (exp) (value-of-expr exp)]
+    )
+  )
+)
 
-;
+
+; Run ;
 
 
 (define scan+parse
@@ -118,7 +140,9 @@
 
 (define REPL
   (sllgen:make-rep-loop "-->"
-                        (lambda (pgm) (value-of-program pgm))
-                        (sllgen:make-stream-parser basic-lex basic-grmr)))
+    (lambda (pgm) (value-of-program pgm))
+    (sllgen:make-stream-parser basic-lex basic-grmr)
+  )
+)
 
 (REPL)
