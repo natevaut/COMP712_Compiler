@@ -31,7 +31,9 @@
     (statement ("const" identifier "=" expression terminal) a-const-decl)
     (statements+ () empty-statements+)
     (statements+ (statements) some-statements+)
-    (expression (bin-operation) a-bin-op-expr)
+    (expression (bin-operation expression+) a-bin-op-expr)
+    (expression+ ("?" expression ":" expression) ternary-expr+)
+    (expression+ () empty-expr+)
     (bin-operation (math-expression bin-operation+) a-bin-op)
     (bin-operation+ ("===" math-expression bin-operation+) an-equality-op)
     (bin-operation+ ("!==" math-expression bin-operation+) an-inequality-op)
@@ -129,7 +131,17 @@
 (define value-of-expr
   (lambda (exp)
     (cases expression exp
-      [a-bin-op-expr (op) (value-of-bin-op op)]
+      [a-bin-op-expr (op e+) (value-of-expr2 op e+)]
+    )
+  )
+)
+
+(define value-of-expr2
+  (lambda (op expr+)
+    (define op-val (value-of-bin-op op))
+    (cases expression+ expr+
+      [ternary-expr+ (e1 e2) (if (truthy op-val) (value-of-expr e1) (value-of-expr e2))]
+      [empty-expr+ () op-val]
     )
   )
 )
