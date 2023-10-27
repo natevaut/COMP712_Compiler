@@ -5,6 +5,7 @@
 (define code #<<ENDOFTEXT
 
 function x(x) { return true; }
+console.log(1, 2);
 x(2);
 
 ENDOFTEXT
