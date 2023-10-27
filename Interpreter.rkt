@@ -14,6 +14,9 @@
     (boolean ((or "true" "false")) symbol)
     (null ("null") symbol)
     (terminal (";") symbol)
+    (quoted-string ("\"" (arbno (not #\")) "\"") string)
+    (quoted-string ("\'" (arbno (not #\')) "\'") string)
+    (quoted-string ("`" (arbno (not #\`)) "`") string)
 ))
 
 (define basic-grmr '(
@@ -23,6 +26,7 @@
     (statements+ (statements) some-statements+)
     (expression (bin-operation) a-bin-op-expr)
     (expression (boolean) a-boolean)
+    (expression (quoted-string) a-string)
     (expression (null) null)
     (bin-operation (math-expression bin-operation+) a-bin-op)
     (bin-operation+ ("===" math-expression bin-operation+) an-equality-op)
@@ -92,6 +96,7 @@
     (cases expression exp
       [a-bin-op-expr (op) (value-of-bin-op op)]
       [a-boolean (bool) bool]
+      [a-string (str) str]
       [null (null) #\0]
     )
   )
