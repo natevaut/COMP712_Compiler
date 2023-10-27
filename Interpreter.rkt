@@ -358,4 +358,5 @@
   )
 )
 
-(REPL)
+(provide run)
+(provide REPL)

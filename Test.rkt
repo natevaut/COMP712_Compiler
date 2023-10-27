@@ -1,9 +1,13 @@
 #lang eopl
 (require "./Parser.rkt")
+(require "./Interpreter.rkt")
 
-(display (scan+parse #<<ENDOFTEXT
+(define code #<<ENDOFTEXT
 
 function x(x) { return true; }
+x(2);
 
 ENDOFTEXT
-))
+)
+
+(display (run code))
