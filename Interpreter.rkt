@@ -22,6 +22,9 @@
 (define basic-grmr '(
     (program (statements) a-program)
     (statements (expression terminal statements+) some-statements)
+    (statements ("if" "(" expression ")" "{" statements "}" else-content) if-block)
+    (else-content ("else" "{" statements "}") else-block)
+    (else-content () else-block-empty)
     (statements+ () empty-statements+)
     (statements+ (statements) some-statements+)
     (expression (bin-operation) a-bin-op-expr)
@@ -68,7 +71,7 @@
 (define value-of-st+
   (lambda (st+)
     (cases statements+ st+
-      [empty-statements+ () #\0]
+      [empty-statements+ () 'empty]
       [some-statements+ (sts) (value-of-sts sts)]
     )
   )
@@ -79,12 +82,26 @@
     (cases statements sts
       [some-statements (expr _ st+)
         ; Run both statements
-        ; Return the second if not null else first
+        ; Return the second if not empty else first
         (define expr-ran (value-of-expr expr))
         (define sts-ran (value-of-st+ st+))
-        (if (eq? sts-ran #\0)
+        (if (eq? sts-ran 'empty)
             expr-ran
             sts-ran
+        )
+      ]
+      [if-block (test if-sts else-block-content)
+        ; To parse the else block
+        (define value-of-else-content (lambda (content)
+           (cases else-content content
+             [else-block (sts) (value-of-sts sts)]
+             [else-block-empty () 'undefined]
+           )
+        ))
+        ; Parse the if statement
+        (if (truthy (value-of-expr test))
+          (value-of-sts if-sts)
+          (value-of-else-content else-block-content)
         )
       ]
     )
@@ -97,7 +114,7 @@
       [a-bin-op-expr (op) (value-of-bin-op op)]
       [a-boolean (bool) bool]
       [a-string (str) str]
-      [null (null) #\0]
+      [null (null) 'null]
     )
   )
 )
@@ -194,6 +211,15 @@
   )
 )
 
+(define (truthy val) (not (falsey val)))
+(define (falsey val)
+  (or
+    (eq? val 'false)
+    (eq? val 'null)
+    (eq? val 'undefined)
+    (eq? val 0)
+  )
+)
 
 ; Run ;
 
