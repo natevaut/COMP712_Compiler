@@ -9,7 +9,9 @@
     (whitespace (whitespace) skip)
     (comment ("//" (arbno (not #\newline))) skip)
     (number ((arbno digit)) number)
+    (number ((arbno digit) "." digit (arbno digit)) number)
     (boolean ((or "true" "false")) symbol)
+    (null ("null") symbol)
     (terminal (";") symbol)
 ))
 
@@ -19,6 +21,8 @@
     (statements+ () empty-statements+)
     (statements+ (statements) some-statements+)
     (expression (math-expression) a-math-expr)
+    (expression (boolean) a-boolean)
+    (expression (null) null)
     (math-expression (math-term math-expression+) an-expr)
     (math-expression+ ("+" math-term math-expression+) an-add-expr)
     (math-expression+ ("-" math-term math-expression+) a-sub-expr)
@@ -75,6 +79,8 @@
   (lambda (exp)
     (cases expression exp
       [a-math-expr (expr) (value-of-math-expr expr)]
+      [a-boolean (bool) bool]
+      [null (null) #\0]
     )
   )
 )
