@@ -37,6 +37,7 @@
     (expression (boolean) a-boolean)
     (expression (quoted-string) a-string)
     (expression (null) null)
+    (expression (identifier) an-identifier)
     (bin-operation (math-expression bin-operation+) a-bin-op)
     (bin-operation+ ("===" math-expression bin-operation+) an-equality-op)
     (bin-operation+ ("!==" math-expression bin-operation+) an-inequality-op)
@@ -118,7 +119,7 @@
           (value-of-else-content else-block-content)
         )
       ]
-      [a-const-decl (id decl-st _) (set! id decl-st)]
+      [a-const-decl (id decl-st _) (set-value id decl-st)]
     )
   )
 )
@@ -130,6 +131,7 @@
       [a-boolean (bool) bool]
       [a-string (str) str]
       [null (null) 'null]
+      [an-identifier (id) (get-value id)]
     )
   )
 )
@@ -234,6 +236,13 @@
     (eq? val 'undefined)
     (eq? val 0)
   )
+)
+
+(define (set-value id val)
+  (set! id val)
+)
+(define (get-value id)
+  id ; TODO implement getter
 )
 
 ; Run ;
