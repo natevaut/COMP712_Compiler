@@ -1,8 +1,37 @@
 #lang eopl
-;(require "./Parser.rkt")
-(require "./Structures.rkt")
 
 ;(provide value-of-program value-of)
+
+; Environment
+
+(define-datatype environment environment?
+  (empty-env)
+  (extended-env
+   (sym symbol?)
+   (val anything?)
+   (env environment?)))
+
+(define anything? (lambda (v) #t))
+
+(define (lookup-env env search-sym)
+  (cases environment env
+    (empty-env ()
+               (eopl:error 'lookup-env "~s lookup failed: empty env" search-sym))
+    (extended-env (sym val old-env)
+                  (if (eqv? sym search-sym)
+                      val
+                      (lookup-env old-env search-sym)))))
+
+(define (set-value env id val)
+  (set! global-env (extended-env id val global-env))
+  'undefined
+)
+(define (get-value env id)
+  (lookup-env global-env id)
+)
+
+(define global-env (empty-env))
+
 
 ;;;;;;;;;;;
 (define basic-lex '(
@@ -71,43 +100,40 @@
 (sllgen:make-define-datatypes basic-lex basic-grmr)
 ;;;;;;;;;
 
-;(define init-env empty-env)
-
-
 (define value-of-program
   (lambda (pgm)
     (cases program pgm
-      [a-program (sts) (value-of-sts sts) ]
+      [a-program (sts) (value-of-sts sts global-env)]
     )
   )
 )
 
 (define value-of-block
-  (lambda (blk)
+  (lambda (blk env)
     (cases block blk
-      [braced-block (sts) (value-of-sts sts)]
-      [unbraced-block (expr _) (value-of-expr expr)]
+      [braced-block (sts) (value-of-sts sts env)]
+      [unbraced-block (expr _) (value-of-expr expr env)]
     )
   )
 )
 
 (define value-of-st+
-  (lambda (st+)
+  (lambda (st+ env)
     (cases statements+ st+
       [empty-statements+ () 'empty]
-      [some-statements+ (sts) (value-of-sts sts)]
+      [some-statements+ (sts) (value-of-sts sts env)]
     )
   )
 )
 
 (define value-of-sts
-  (lambda (sts)
+  (lambda (sts env)
     (cases statements sts
       [some-statements (st st+)
         ; Run both statements
         ; Return the second if not empty else first
-        (define st-ran (value-of-st st))
-        (define sts-ran (value-of-st+ st+))
+        (define st-ran (value-of-st st env))
+        (define sts-ran (value-of-st+ st+ env))
         (if (eq? sts-ran 'empty)
             st-ran
             sts-ran
@@ -118,107 +144,107 @@
 )
 
 (define value-of-st
-  (lambda (st)
+  (lambda (st env)
     (cases statement st
-      [expr-statement (expr _) (value-of-expr expr)]
+      [expr-statement (expr _) (value-of-expr expr env)]
       [if-block (test if-blk else-blk)
         ; To parse the else block
         (define value-of-else-content (lambda (content)
            (cases else-content content
-             [else-block (blk) (value-of-block blk)]
+             [else-block (blk) (value-of-block blk env)]
              [else-block-empty () 'undefined]
            )
         ))
         ; Parse the if statement
         (if (truthy (value-of-expr test))
-          (value-of-block if-blk)
-          (value-of-else-content else-blk)
+          (value-of-block if-blk env)
+          (value-of-else-content else-blk env)
         )
       ]
-      [a-const-decl (id decl-st _) (set-value id decl-st)]
-      [function-decl (func ids sts) (set-value func (lambda ids (value-of-sts sts)))]
+      [a-const-decl (id decl-expr _) (set-value env id (value-of-expr decl-expr env))]
+      [function-decl (id params sts) (set-value env id (lambda params (value-of-sts sts env)))]
     )
   )
 )
 
 (define value-of-expr
-  (lambda (exp)
+  (lambda (exp env)
     (cases expression exp
-      [a-bin-op-expr (op e+) (value-of-expr2 op e+)]
+      [a-bin-op-expr (op e+) (value-of-expr2 op e+ env)]
     )
   )
 )
 
 (define value-of-expr2
-  (lambda (op expr+)
-    (define op-val (value-of-bin-op op))
+  (lambda (op expr+ env)
+    (define op-val (value-of-bin-op op env))
     (cases expression+ expr+
-      [ternary-expr+ (e1 e2) (if (truthy op-val) (value-of-expr e1) (value-of-expr e2))]
+      [ternary-expr+ (e1 e2) (if (truthy op-val) (value-of-expr e1 env) (value-of-expr e2 env))]
       [empty-expr+ () op-val]
     )
   )
 )
 
 (define value-of-bin-op
-  (lambda (op)
+  (lambda (op env)
     (cases bin-operation op
-      [a-bin-op (expr op+) (value-of-bin-op2 expr op+)]
+      [a-bin-op (expr op+) (value-of-bin-op2 expr op+ env)]
     )
   )
 )
 
 (define value-of-bin-op2
-  (lambda (first-expr rest-op+)
+  (lambda (first-expr rest-op+ env)
     (cases bin-operation+ rest-op+
       [an-equality-op (expr op+)
-        (eq? (value-of-math-expr first-expr) (value-of-bin-op2 expr op+))
+        (eq? (value-of-math-expr first-expr env) (value-of-bin-op2 expr op+ env))
       ]
       [an-inequality-op (expr op+)
-        (not (eq? (value-of-math-expr first-expr) (value-of-bin-op2 expr op+)))
+        (not (eq? (value-of-math-expr first-expr env) (value-of-bin-op2 expr op+ env)))
       ]
       [a-lt-op (expr op+)
-        (< (value-of-math-expr first-expr) (value-of-bin-op2 expr op+))
+        (< (value-of-math-expr first-expr env) (value-of-bin-op2 expr op+ env))
       ]
       [a-lte-op (expr op+)
-        (<= (value-of-math-expr first-expr) (value-of-bin-op2 expr op+))
+        (<= (value-of-math-expr first-expr env) (value-of-bin-op2 expr op+ env))
       ]
       [a-gt-op (expr op+)
-        (> (value-of-math-expr first-expr) (value-of-bin-op2 expr op+))
+        (> (value-of-math-expr first-expr env) (value-of-bin-op2 expr op+ env))
       ]
       [a-gte-op (expr op+)
-        (>= (value-of-math-expr first-expr) (value-of-bin-op2 expr op+))
+        (>= (value-of-math-expr first-expr env) (value-of-bin-op2 expr op+ env))
       ]
       [an-and-op (expr op+)
-        (define first (value-of-math-expr first-expr))
-        (define rest (value-of-bin-op2 expr op+))
+        (define first (value-of-math-expr first-expr env))
+        (define rest (value-of-bin-op2 expr op+ env))
         (if (and (truthy first) (truthy rest)) rest #f)
       ]
       [an-or-op (expr op+)
-        (define first (value-of-math-expr first-expr))
-        (define rest (value-of-bin-op2 expr op+))
+        (define first (value-of-math-expr first-expr env))
+        (define rest (value-of-bin-op2 expr op+ env))
         (if (truthy first) first rest)
       ]
-      [null-math-op () (value-of-math-expr first-expr)]
+      [null-math-op () (value-of-math-expr first-expr env)]
     )
   )
 )
 
 (define value-of-math-expr
-  (lambda (exp)
+  (lambda (exp env)
     (cases math-expression exp
-      [an-expr (t e+) (value-of-math-expr2 t e+)]
+      [an-expr (t e+) (value-of-math-expr2 t e+ env)]
     )
   )
 )
 
 (define value-of-math-expr2
-  (lambda (first-term expr+)
-    (define first (value-of-math-term first-term))
+  (lambda (first-term expr+ env)
+    (define first (value-of-math-term first-term env))
     (define plus-func (if (number? first) + quoted-string-append))
     (cases math-expression+ expr+
-      [an-add-expr (t e+) (plus-func first (value-of-math-expr2 t e+))]
-      [a-sub-expr (t e+) (- first (value-of-math-expr2 t e+))]
-      [a-mod-expr (t e+) (modulo first (value-of-math-expr2 t e+))]
+      [an-add-expr (t e+) (plus-func first (value-of-math-expr2 t e+ env))]
+      [a-sub-expr (t e+) (- first (value-of-math-expr2 t e+ env))]
+      [a-mod-expr (t e+) (modulo first (value-of-math-expr2 t e+ env))]
       [null-expr () first]
     )
   )
@@ -226,34 +252,35 @@
 
 
 (define value-of-math-term
-  (lambda (tm)
+  (lambda (tm env)
     (cases math-term tm
-      [a-factor (f t+) (value-of-math-term2 f t+)]
+      [a-factor (f t+) (value-of-math-term2 f t+ env)]
     )
   )
 )
 
 (define value-of-math-term2
-  (lambda (fac t+)
+  (lambda (fac t+ env)
     (cases math-term+ t+
-      [a-mult-term (f t+) (* (value-of-math-term2 f t+)
-                             (value-of-atomic fac))]
-      [a-div-term (f t+) (/ (value-of-atomic fac)
-                            (value-of-math-term2 f t+))]
-      [null-term () (value-of-atomic fac)]
+      [a-mult-term (f t+) (* (value-of-math-term2 f t+ env)
+                             (value-of-atomic fac env))]
+      [a-div-term (f t+) (/ (value-of-atomic fac env)
+                            (value-of-math-term2 f t+ env))]
+      [null-term () (value-of-atomic fac env)]
     )
   )
 )
 
 (define value-of-atomic
-  (lambda (f)
+  (lambda (f env)
+    (define (value-of-expr-w/-env expr) (value-of-expr expr env))
     (cases atomic f
       [a-number (x) x]
       [a-string (str) str]
-      [an-identifier (id) (get-value id)]
-      [a-group (exprs) (car (reverse (map value-of-expr exprs)))]
-      [unary-minus (n) (- (value-of-atomic n))]
-      [unary-not (n) (not (value-of-atomic n))]
+      [an-identifier (id) (get-value env id)]
+      [a-group (exprs) (car (reverse (map value-of-expr-w/-env exprs)))]
+      [unary-minus (n) (- (value-of-atomic n env))]
+      [unary-not (n) (not (value-of-atomic n env))]
       [true () #t]
       [false () #f]
       [undefined () 'undefined]
@@ -272,19 +299,13 @@
   )
 )
 
-(define (set-value id val)
-  (set! id val)
-)
-(define (get-value id)
-  0 ; TODO implement getter
-)
-
 ; "a" + "b" -> "ab"
 (define (quoted-string-append a b)
   (define a-data (substring a 1 (- (string-length a) 1)))
   (define b-data (substring b 1 (- (string-length b) 1)))
   (string-append "\"" a-data b-data "\"")
 )
+
 
 ; Run ;
 
