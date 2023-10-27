@@ -23,10 +23,12 @@
 
 (define basic-grmr '(
     (program (statements) a-program)
+    (block ("{" statements "}") braced-block)
+    (block (expression terminal) unbraced-block)
     (statements (statement statements+) some-statements)
     (statement (expression terminal) expr-statement)
-    (statement ("if" "(" expression ")" "{" statements "}" else-content) if-block)
-    (else-content ("else" "{" statements "}") else-block)
+    (statement ("if" "(" expression ")" block else-content) if-block)
+    (else-content ("else" block) else-block)
     (else-content () else-block-empty)
     (statement ("const" identifier "=" expression terminal) a-const-decl)
     (statements+ () empty-statements+)
@@ -79,6 +81,15 @@
   )
 )
 
+(define value-of-block
+  (lambda (blk)
+    (cases block blk
+      [braced-block (sts) (value-of-sts sts)]
+      [unbraced-block (expr _) (value-of-expr expr)]
+    )
+  )
+)
+
 (define value-of-st+
   (lambda (st+)
     (cases statements+ st+
@@ -109,18 +120,18 @@
   (lambda (st)
     (cases statement st
       [expr-statement (expr _) (value-of-expr expr)]
-      [if-block (test if-sts else-block-content)
+      [if-block (test if-blk else-blk)
         ; To parse the else block
         (define value-of-else-content (lambda (content)
            (cases else-content content
-             [else-block (sts) (value-of-sts sts)]
+             [else-block (blk) (value-of-block blk)]
              [else-block-empty () 'undefined]
            )
         ))
         ; Parse the if statement
         (if (truthy (value-of-expr test))
-          (value-of-sts if-sts)
-          (value-of-else-content else-block-content)
+          (value-of-block if-blk)
+          (value-of-else-content else-blk)
         )
       ]
       [a-const-decl (id decl-st _) (set-value id decl-st)]
