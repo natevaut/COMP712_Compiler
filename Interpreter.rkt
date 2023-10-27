@@ -11,8 +11,6 @@
     
     (number ((arbno digit)) number)
     (number ((arbno digit) "." digit (arbno digit)) number)
-    (boolean ((or "true" "false")) symbol)
-    (null ("null") symbol)
     (terminal (";") symbol)
     (quoted-string ("\"" (arbno (not #\")) "\"") string)
     (quoted-string ("\'" (arbno (not #\')) "\'") string)
@@ -33,11 +31,13 @@
     (statement ("const" identifier "=" expression terminal) a-const-decl)
     (statements+ () empty-statements+)
     (statements+ (statements) some-statements+)
-    (expression (bin-operation) a-bin-op-expr)
-    (expression (boolean) a-boolean)
+    (expression ("true") boolean-true)
+    (expression ("false") boolean-false)
+    (expression ("null") null)
+    (expression ("undefined") undefined)
     (expression (quoted-string) a-string)
-    (expression (null) null)
     (expression (identifier) an-identifier)
+    (expression (bin-operation) a-bin-op-expr)
     (bin-operation (math-expression bin-operation+) a-bin-op)
     (bin-operation+ ("===" math-expression bin-operation+) an-equality-op)
     (bin-operation+ ("!==" math-expression bin-operation+) an-inequality-op)
@@ -58,6 +58,8 @@
     (math-term+ ("/" math-factor math-term+) a-div-term)
     (math-term+ () null-term)
     (math-factor (number) a-number)
+    (math-factor ("-" math-factor) unary-minus)
+    (math-factor ("!" math-factor) unary-not)
     (math-factor ("(" expression ")") a-group)
 ))
 
@@ -127,11 +129,14 @@
 (define value-of-expr
   (lambda (exp)
     (cases expression exp
-      [a-bin-op-expr (op) (value-of-bin-op op)]
-      [a-boolean (bool) bool]
+      [boolean-true () #t]
+      [boolean-false () #f]
+      [undefined () 'undefined]
+      [null () 'null]
+      ;[number (num) num]
       [a-string (str) str]
-      [null (null) 'null]
       [an-identifier (id) (get-value id)]
+      [a-bin-op-expr (op) (value-of-bin-op op)]
     )
   )
 )
@@ -224,6 +229,8 @@
     (cases math-factor f
       [a-number (x) x]
       [a-group (exp) (value-of-expr exp)]
+      [unary-minus (n) (- (value-of-math-factor n))]
+      [unary-not (n) (not (value-of-math-factor n))]
     )
   )
 )
