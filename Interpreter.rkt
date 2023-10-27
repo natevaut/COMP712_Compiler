@@ -327,7 +327,7 @@
 (define (truthy val) (not (falsey val)))
 (define (falsey val)
   (or
-    (eq? val 'false)
+    (eq? val #f)
     (eq? val 'null)
     (eq? val 'undefined)
     (eq? val 0)
