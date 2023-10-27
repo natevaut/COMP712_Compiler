@@ -44,7 +44,7 @@
     
     (number ((arbno digit)) number)
     (number ((arbno digit) "." digit (arbno digit)) number)
-    (terminal ((or ";" #\newline)) symbol)
+    (terminal (";") symbol)
     (quoted-string ("\"" (arbno (not #\")) "\"") string)
     (quoted-string ("\'" (arbno (not #\')) "\'") string)
     (quoted-string ("`" (arbno (not #\`)) "`") string)
