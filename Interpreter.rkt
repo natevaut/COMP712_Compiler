@@ -23,7 +23,7 @@
 
 (define basic-grmr '(
     (program (statements) a-program)
-    (block ("{" statements "}") braced-block)
+    (block ("{" (separated-list statements "") "}") braced-block)
     (block (expression terminal) unbraced-block)
     (statements (statement statements+) some-statements)
     (statement (expression terminal) expr-statement)
@@ -31,7 +31,7 @@
     (else-content ("else" block) else-block)
     (else-content () else-block-empty)
     (statement ("const" identifier "=" expression terminal) a-const-decl)
-    (statement ("function" identifier "(" (separated-list identifier ",") ")" "{" statements "}") function-decl)
+    (statement ("function" identifier "(" (separated-list identifier ",") ")" block) function-decl)
     (statements+ () empty-statements+)
     (statements+ (statements) some-statements+)
     (expression (bin-operation expression+) a-bin-op-expr)
@@ -276,7 +276,7 @@
   (set! id val)
 )
 (define (get-value id)
-  id ; TODO implement getter
+  0 ; TODO implement getter
 )
 
 ; "a" + "b" -> "ab"
