@@ -31,8 +31,6 @@
     (statement ("const" identifier "=" expression terminal) a-const-decl)
     (statements+ () empty-statements+)
     (statements+ (statements) some-statements+)
-    (expression (quoted-string) a-string)
-    (expression (identifier) an-identifier)
     (expression (bin-operation) a-bin-op-expr)
     (bin-operation (math-expression bin-operation+) a-bin-op)
     (bin-operation+ ("===" math-expression bin-operation+) an-equality-op)
@@ -54,6 +52,8 @@
     (math-term+ ("/" atomic math-term+) a-div-term)
     (math-term+ () null-term)
     (atomic (number) a-number)
+    (atomic (quoted-string) a-string)
+    (atomic (identifier) an-identifier)
     (atomic ("true") true)
     (atomic ("false") false)
     (atomic ("null") null)
@@ -129,8 +129,6 @@
 (define value-of-expr
   (lambda (exp)
     (cases expression exp
-      [a-string (str) str]
-      [an-identifier (id) (get-value id)]
       [a-bin-op-expr (op) (value-of-bin-op op)]
     )
   )
@@ -190,14 +188,13 @@
 
 (define value-of-math-expr2
   (lambda (first-term expr+)
+    (define first (value-of-math-term first-term))
+    (define plus-func (if (number? first) + quoted-string-append))
     (cases math-expression+ expr+
-      [an-add-expr (t e+) (+ (value-of-math-term first-term)
-                             (value-of-math-expr2 t e+))]
-      [a-sub-expr (t e+) (- (value-of-math-term first-term)
-                            (value-of-math-expr2 t e+))]
-      [a-mod-expr (t e+) (modulo (value-of-math-term first-term)
-                                 (value-of-math-expr2 t e+))]
-      [null-expr () (value-of-math-term first-term)]
+      [an-add-expr (t e+) (plus-func first (value-of-math-expr2 t e+))]
+      [a-sub-expr (t e+) (- first (value-of-math-expr2 t e+))]
+      [a-mod-expr (t e+) (modulo first (value-of-math-expr2 t e+))]
+      [null-expr () first]
     )
   )
 )
@@ -227,6 +224,8 @@
   (lambda (f)
     (cases atomic f
       [a-number (x) x]
+      [a-string (str) str]
+      [an-identifier (id) (get-value id)]
       [a-group (exp) (value-of-expr exp)]
       [unary-minus (n) (- (value-of-atomic n))]
       [unary-not (n) (not (value-of-atomic n))]
@@ -253,6 +252,13 @@
 )
 (define (get-value id)
   id ; TODO implement getter
+)
+
+; "a" + "b" -> "ab"
+(define (quoted-string-append a b)
+  (define a-data (substring a 1 (- (string-length a) 1)))
+  (define b-data (substring b 1 (- (string-length b) 1)))
+  (string-append "\"" a-data b-data "\"")
 )
 
 ; Run ;
