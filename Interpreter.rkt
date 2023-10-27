@@ -31,6 +31,7 @@
     (else-content ("else" block) else-block)
     (else-content () else-block-empty)
     (statement ("const" identifier "=" expression terminal) a-const-decl)
+    (statement ("function" identifier "(" (separated-list identifier ",") ")" "{" statements "}") function-decl)
     (statements+ () empty-statements+)
     (statements+ (statements) some-statements+)
     (expression (bin-operation expression+) a-bin-op-expr)
@@ -135,6 +136,7 @@
         )
       ]
       [a-const-decl (id decl-st _) (set-value id decl-st)]
+      [function-decl (func ids sts) (set-value func (lambda ids (value-of-sts sts)))]
     )
   )
 )
