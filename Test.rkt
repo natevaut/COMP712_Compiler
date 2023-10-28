@@ -1,5 +1,4 @@
 #lang eopl
-(require "./Parser.rkt")
 (require "./Interpreter.rkt")
 
 (display (run #<<ENDOFTEXT
