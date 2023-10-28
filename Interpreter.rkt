@@ -56,9 +56,11 @@
 
 (define basic-grmr '(
     (program (statements) a-program)
-    (block ("{" (separated-list statements "") "}") braced-block)
+    (block ("{" statements "}") braced-block)
     (block (expression terminal) unbraced-block)
-    (func-statements ((separated-list func-statement "")) func-sts)
+    (func-statements (func-statement func-statement+) func-sts)
+    (func-statement+ (func-statement) func-st+)
+    (func-statement+ () func-st+-empty)
     (func-statement (statement) func-st)
     (func-statement ("return" expression terminal) func-return)
     (statements (statement statements+) some-statements)
@@ -154,9 +156,18 @@
       (set-value env (car pair) (cadr pair))
     )
     (map apply-arg-val param-arg-list)
-    (define (value-of-func-st-w/-env st) (value-of-func-st st env))
+    
     (cases func-statements sts
-      [func-sts (sts) (map value-of-func-st-w/-env sts)]
+      [func-sts (st sts+) (value-of-func-sts+ st sts+)]
+    )
+  )
+)
+
+(define value-of-func-sts+
+  (lambda (st sts+ env)
+    (cases func-statement+ sts+
+      [func-st+ (st) (value-of-func-sts+ st sts+ env)]
+      [func-st+-empty () (value-of-func-st st env)]
     )
   )
 )
