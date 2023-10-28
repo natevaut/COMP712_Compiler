@@ -158,7 +158,7 @@
     (map apply-arg-val param-arg-list)
     
     (cases func-statements sts
-      [func-sts (st sts+) (value-of-func-sts+ st sts+)]
+      [func-sts (st sts+) (value-of-func-sts+ st sts+ env)]
     )
   )
 )
@@ -328,8 +328,15 @@
     (define (value-of-expr-w/-env expr) (value-of-expr expr env))
     (cases identifier-post post
       [just-identifier () val]
-      [func-call (params) (car (val (map value-of-expr-w/-env params)))]
+      [func-call (params) (func-val (val (map value-of-expr-w/-env params)))]
     )
+  )
+)
+
+(define (func-val pair-or-void)
+  (if (pair? pair-or-void)
+      (car pair-or-void)
+      pair-or-void
   )
 )
 
