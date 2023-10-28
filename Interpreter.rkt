@@ -58,8 +58,9 @@
     (program (statements) a-program)
     (block ("{" (separated-list statements "") "}") braced-block)
     (block (expression terminal) unbraced-block)
-    (func-statements ((separated-list statements "")) func-sts)
-    (func-statements ("return" expression terminal func-statements) func-return)
+    (func-statements ((separated-list func-statement "")) func-sts)
+    (func-statement (statement) func-st)
+    (func-statement ("return" expression terminal) func-return)
     (statements (statement statements+) some-statements)
     (statement (expression terminal) expr-statement)
     (statement ("if" "(" expression ")" block else-content) if-block)
@@ -135,6 +136,15 @@
   )
 )
 
+(define value-of-func-st
+  (lambda (st env)
+    (cases func-statement st
+      [func-st (st) (value-of-st st env)]
+      [func-return (expr _) (value-of-expr expr env)]
+    )
+  )
+)
+
 (define value-of-func-sts
   (lambda (sts params+args env)
     ; list of (param . val)
@@ -143,9 +153,9 @@
       (set-value env (car pair) (cadr pair))
     )
     (map apply-arg-val param-arg-list)
+    (define (value-of-func-st-w/-env st) (value-of-func-st st env))
     (cases func-statements sts
-      [func-sts (sts) (value-of-sts sts env)]
-      [func-return (expr _ _rest) (value-of-expr expr env)] ; ignore _rest
+      [func-sts (sts) (map value-of-func-st-w/-env sts)]
     )
   )
 )
