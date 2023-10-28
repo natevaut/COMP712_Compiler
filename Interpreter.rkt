@@ -16,7 +16,7 @@
 (define (lookup-env env search-sym)
   (cases environment env
     (empty-env ()
-               (eopl:error 'lookup-env "~s lookup failed: empty env or undeclared variable" search-sym))
+               (eopl:error 'lookup-env "undefined variable '~s'" search-sym))
     (extended-env (sym val old-env)
                   (if (eqv? sym search-sym)
                       val
