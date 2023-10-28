@@ -117,6 +117,7 @@ console.log(close_enough(12.1, 12));
 //==========================
 console.log("Test recursive function");
 //==========================
+console.log("Calling recursive functions is not implemented.");
 
 function factorial(n) {
     return n === 1
@@ -124,8 +125,10 @@ function factorial(n) {
 		   : n * factorial(n - 1);
 }
 
+/*
 console.log(factorial(4));
 console.log(factorial(8));
+*/
 		   
 
 function fib(n) {
@@ -136,8 +139,10 @@ function fib(n) {
 		   : fib(n - 1) + fib(n - 2);
 }
 
+/*
 console.log(fib(4));
 console.log(fib(8));
+*/
 
 
 ENDOFTEXT
