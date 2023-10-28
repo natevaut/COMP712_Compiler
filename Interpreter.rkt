@@ -71,7 +71,7 @@
     (statements+ () empty-statements+)
     (statements+ (statements) some-statements+)
     (expression (bin-operation expression+) a-bin-op-expr)
-    (expression ("console" "." "log" "(" (separated-list expression ",") ")" terminal) console.log)
+    (expression ("console" "." "log" "(" (separated-list expression ",") ")") console.log)
     (expression+ ("?" expression ":" expression) ternary-expr+)
     (expression+ () empty-expr+)
     (bin-operation (math-expression bin-operation+) a-bin-op)
@@ -208,7 +208,7 @@
     (define (value-of-expr-w/-env expr) (value-of-expr expr env))
     (cases expression exp
       [a-bin-op-expr (op e+) (value-of-expr2 op e+ env)]
-      [console.log (exprs _) (display (map value-of-expr-w/-env exprs)) (display #\newline)]
+      [console.log (exprs) (display (map value-of-expr-w/-env exprs)) (display #\newline)]
     )
   )
 )
