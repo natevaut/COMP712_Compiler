@@ -315,7 +315,7 @@
     (define (value-of-expr-w/-env expr) (value-of-expr expr env))
     (cases identifier-post post
       [just-identifier () val]
-      [func-call (params) (val (map value-of-expr-w/-env params))]
+      [func-call (params) (car (val (map value-of-expr-w/-env params)))]
     )
   )
 )
