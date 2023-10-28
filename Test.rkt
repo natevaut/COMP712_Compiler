@@ -12,23 +12,23 @@
 console.log("Simple arithmetic tests");
 //=========================
 
-345;
+console.log(345);
 
-123 + 45;
+console.log(123 + 45);
 
-1000 - 482;
+console.log(1000 - 482);
 
-5 * 35;
+console.log(5 * 35);
 
-10 / 4;
+console.log(10 / 4);
 
-9.5 + 22;
+console.log(9.5 + 22);
 
-(3 * 5) + (10 -4);
+console.log((3 * 5) + (10 -4));
 
-1 - 5 / 2 * 4 + 3;
+console.log(1 - 5 / 2 * 4 + 3);
 
-3 * 2 * (5 + 1 - 2);
+console.log(3 * 2 * (5 + 1 - 2));
 
 
 //============================
@@ -36,15 +36,15 @@ console.log("Test constant declarations");
 //============================
 
 const size = 5;
-size;
-5 * size;
+console.log(size);
+console.log(5 * size);
 
 const pi = 3.14159;
 const radius = 10;
-pi * radius * radius;
+console.log(pi * radius * radius);
 
 const circumference = 2 * pi * radius;
-circumference;
+console.log(circumference);
 
 
 //============================
@@ -81,10 +81,10 @@ console.log(f(5));
 console.log("Test booleans and conditionals");
 //===============================
 
-(3 > 2) && (5 < 9);
-(3 > 2) && (5 > 9);
-(3 > 2) || (5 > 9);
-(3 < 2) || (5 < 9);
+console.log((3 > 2) && (5 < 9));
+console.log((3 > 2) && (5 > 9));
+console.log((3 > 2) || (5 > 9));
+console.log((3 < 2) || (5 < 9));
 
 function abs(x) {
     return x >= 0 ? x : -x;
@@ -138,7 +138,6 @@ function fib(n) {
 
 console.log(fib(4));
 console.log(fib(8));
-
 
 
 ENDOFTEXT
