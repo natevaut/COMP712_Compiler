@@ -36,6 +36,7 @@
 
 (define global-env (empty-env))
 
+(set-value global-env 'return (lambda (val) val))
 
 ;;;;;;;;;;;
 (define basic-lex '(
@@ -63,7 +64,11 @@
     (func-statement+ (func-statement) func-st+)
     (func-statement+ () func-st+-empty)
     (func-statement (statement) func-st)
-    (func-statement ("return" expression terminal) func-return)
+    (func-statement ("return " expression terminal) func-return)
+    (func-statement (#<<ENDOFRETURN
+ return
+ENDOFRETURN
+                     expression terminal) func-return-undefined)
     (statements (statement statements+) some-statements)
     (statement (terminal) empty-st)
     (statement (expression terminal) expr-statement)
@@ -145,6 +150,7 @@
     (cases func-statement st
       [func-st (st) (value-of-st st env)]
       [func-return (expr _) (value-of-expr expr env)]
+      [func-return-undefined (expr _) 'empty]
     )
   )
 )
