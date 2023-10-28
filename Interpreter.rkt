@@ -312,11 +312,12 @@
 
 (define value-of-math-term2
   (lambda (fac t+ env)
+    ; ! fac can be num
     (cases math-term+ t+
-      [a-mult-term (f t+) (* (value-of-math-term2 f t+ env)
-                             (value-of-atomic fac env))]
-      [a-div-term (f t+) (/ (value-of-atomic fac env)
-                            (value-of-math-term2 f t+ env))]
+      [a-mult-term (f t+) (* (value-of-math-term2 f t+ env) (value-of-atomic fac env))]
+      ; Divide: avoid doing improper order of operations of 'a / (b ...)' (correct: '(a / b) ...')
+      [a-div-term (f t+) (value-of-math-term2
+                           (/ (value-of-atomic fac env) (value-of-atomic f env)) t+ env)]
       [null-term () (value-of-atomic fac env)]
     )
   )
@@ -342,7 +343,10 @@
 
 (define value-of-atomic
   (lambda (f env)
-    (define (value-of-expr-w/-env expr) (value-of-expr expr env))
+   ; f could be num
+   (define (value-of-expr-w/-env expr) (value-of-expr expr env))
+   (if (number? f)
+    f
     (cases atomic f
       [a-number (x) x]
       [a-string (str) str]
@@ -355,6 +359,7 @@
       [undefined () 'undefined]
       [null () 'null]
     )
+   )
   )
 )
 
