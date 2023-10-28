@@ -22,10 +22,6 @@
                       val
                       (lookup-env old-env search-sym)))))
 
-(define (set-lvalue env id val)
-  (extended-env id val global-env)
-  'undefined
-)
 (define (set-value env id val)
   (set! global-env (extended-env id val global-env))
   'undefined
@@ -113,7 +109,9 @@ ENDOFRETURN
     (atomic ("undefined") undefined)
     (atomic ("-" atomic) unary-minus)
     (atomic ("!" atomic) unary-not)
-    (atomic ("(" (separated-list expression ",") ")") a-group)
+    (atomic ("(" (separated-list expression ",") ")" lambda-part) a-group)
+    (lambda-part ("=>" "{" func-statements "}") lambda-part-braced)
+    (lambda-part () no-lambda-part)
 ))
 
 (sllgen:make-define-datatypes basic-lex basic-grmr)
@@ -353,17 +351,28 @@ ENDOFRETURN
   )
 )
 
+(define value-of-parenth-expr
+  (lambda (exprs lbda-part env)
+   (define (value-of-expr-w/-env expr) (value-of-expr expr env))
+    (cases lambda-part lbda-part
+      [lambda-part-braced (sts)
+         (define params (map value-of-expr-w/-env exprs))
+         (lambda args (value-of-func-sts sts (cons params args) env))]
+      [no-lambda-part () (car (reverse (map value-of-expr-w/-env exprs)))]
+    )
+  )
+)
+
 (define value-of-atomic
   (lambda (f env)
    ; f could be num
-   (define (value-of-expr-w/-env expr) (value-of-expr expr env))
    (if (number? f)
     f
     (cases atomic f
       [a-number (x) x]
       [a-string (str) str]
       [an-identifier (id post) (value-of-identifier id post env)]
-      [a-group (exprs) (car (reverse (map value-of-expr-w/-env exprs)))]
+      [a-group (exprs lbda-part) (value-of-parenth-expr exprs lbda-part env)]
       [unary-minus (n) (- (value-of-atomic n env))]
       [unary-not (n) (not (value-of-atomic n env))]
       [true () #t]
