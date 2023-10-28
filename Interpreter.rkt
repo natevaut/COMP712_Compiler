@@ -41,6 +41,7 @@
 (define basic-lex '(
     (whitespace (whitespace) skip)
     (comment ("//" (arbno (not #\newline))) skip)
+    (comment ("/*" (arbno (not #\null)) "*/") skip)
     
     (number ((arbno digit)) number)
     (number ((arbno digit) "." digit (arbno digit)) number)
