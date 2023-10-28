@@ -67,10 +67,10 @@
     (else-content () else-block-empty)
     (statement ("const" identifier "=" expression terminal) a-const-decl)
     (statement ("function" identifier "(" (separated-list identifier ",") ")" "{" func-statements "}") function-decl)
-    (statement ("console" "." "log" "(" (separated-list expression ",") ")" terminal) console.log)
     (statements+ () empty-statements+)
     (statements+ (statements) some-statements+)
     (expression (bin-operation expression+) a-bin-op-expr)
+    (expression ("console" "." "log" "(" (separated-list expression ",") ")" terminal) console.log)
     (expression+ ("?" expression ":" expression) ternary-expr+)
     (expression+ () empty-expr+)
     (bin-operation (math-expression bin-operation+) a-bin-op)
@@ -189,15 +189,16 @@
       [a-const-decl (id decl-expr _) (set-value env id (value-of-expr decl-expr env))]
       [function-decl (id params func-sts) (set-value env id
                        (lambda args (value-of-func-sts func-sts (cons params args) env)))]
-      [console.log (exprs _) (display (map value-of-expr-w/-env exprs)) (display #\newline)]
     )
   )
 )
 
 (define value-of-expr
   (lambda (exp env)
+    (define (value-of-expr-w/-env expr) (value-of-expr expr env))
     (cases expression exp
       [a-bin-op-expr (op e+) (value-of-expr2 op e+ env)]
+      [console.log (exprs _) (display (map value-of-expr-w/-env exprs)) (display #\newline)]
     )
   )
 )
