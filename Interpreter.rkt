@@ -62,6 +62,7 @@
     (func-statement (statement) func-st)
     (func-statement ("return" expression terminal) func-return)
     (statements (statement statements+) some-statements)
+    (statement (terminal) empty-st)
     (statement (expression terminal) expr-statement)
     (statement ("if" "(" expression ")" block else-content) if-block)
     (else-content ("else" block) else-block)
@@ -199,6 +200,7 @@
       [a-const-decl (id decl-expr _) (set-value env id (value-of-expr decl-expr env))]
       [function-decl (id params func-sts) (set-value env id
                        (lambda args (value-of-func-sts func-sts (cons params args) env)))]
+      [empty-st (_) 'empty]
     )
   )
 )
