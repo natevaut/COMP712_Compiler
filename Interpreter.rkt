@@ -394,3 +394,4 @@
 
 (provide run)
 (provide REPL)
+(provide scan+parse)
