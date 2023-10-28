@@ -290,11 +290,12 @@
 
 (define value-of-math-expr2
   (lambda (first-term expr+ env)
+    ;first-term may be num
     (define first (value-of-math-term first-term env))
     (define plus-func (if (number? first) + quoted-string-append))
     (cases math-expression+ expr+
       [an-add-expr (t e+) (plus-func first (value-of-math-expr2 t e+ env))]
-      [a-sub-expr (t e+) (- first (value-of-math-expr2 t e+ env))]
+      [a-sub-expr (t e+) (value-of-math-expr2 (- first (value-of-math-term t env)) e+ env)]
       [a-mod-expr (t e+) (modulo first (value-of-math-expr2 t e+ env))]
       [null-expr () first]
     )
@@ -304,9 +305,13 @@
 
 (define value-of-math-term
   (lambda (tm env)
+   ; ! tm can be number
+   (if (number? tm)
+    tm
     (cases math-term tm
       [a-factor (f t+) (value-of-math-term2 f t+ env)]
     )
+   )
   )
 )
 
