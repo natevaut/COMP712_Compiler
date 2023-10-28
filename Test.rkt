@@ -8,9 +8,11 @@
 // Note: students may want to provide additional tests
 // 
 
-//=========================
+console.log();
+console.log("===============================");
 console.log("Simple arithmetic tests");
-//=========================
+console.log("===============================");
+console.log();
 
 console.log(345);
 
@@ -31,9 +33,11 @@ console.log(1 - 5 / 2 * 4 + 3);
 console.log(3 * 2 * (5 + 1 - 2));
 
 
-//============================
+console.log();
+console.log("===============================");
 console.log("Test constant declarations");
-//============================
+console.log("===============================");
+console.log();
 
 const size = 5;
 console.log(size);
@@ -47,9 +51,11 @@ const circumference = 2 * pi * radius;
 console.log(circumference);
 
 
-//============================
+console.log();
+console.log("===============================");
 console.log("Test function declarations");
-//============================
+console.log("===============================");
+console.log();
 
 function square(x) {
     return x * x;
@@ -60,9 +66,11 @@ console.log(square(4 + 2));
 console.log(square(3) + square(4));
 
 
-//============================
+console.log();
+console.log("===============================");
 console.log("Test compound functions");
-//============================
+console.log("===============================");
+console.log();
 
 console.log(square(square(3)));
 
@@ -77,9 +85,11 @@ function f(a) {
 console.log(f(5));
 
 
-//===============================
+console.log();
+console.log("===============================");
 console.log("Test booleans and conditionals");
-//===============================
+console.log("===============================");
+console.log();
 
 console.log((3 > 2) && (5 < 9));
 console.log((3 > 2) && (5 > 9));
@@ -114,9 +124,12 @@ console.log(close_enough(12.0003, 12));
 console.log(close_enough(12.1, 12));
 
 
-//==========================
+console.log();
+console.log("===============================");
 console.log("Test recursive function");
-//==========================
+console.log("===============================");
+console.log();
+
 console.log("Calling recursive functions is not implemented.");
 
 function factorial(n) {
@@ -145,6 +158,18 @@ console.log(fib(8));
 */
 
 
+console.log();
+console.log("===============================");
+console.log("Other tests");
+console.log("===============================");
+console.log();
+
+console.log("Lambda test");
+const lbda = () => { return true; };
+console.log(lbda());
+
+
+console.log();
 ENDOFTEXT
 ))
 
