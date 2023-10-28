@@ -192,7 +192,7 @@
            )
         ))
         ; Parse the if statement
-        (if (truthy (value-of-expr test))
+        (if (truthy (value-of-expr test env))
           (value-of-block if-blk env)
           (value-of-else-content else-blk env)
         )
